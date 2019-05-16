@@ -4,11 +4,12 @@ html
     meta(charset='utf-8')
     title RealTime 채팅방 Example
   body
-    div 검사 창을 활용!!
+    div 검사 창 Network 탭을 활용!!
     script(src='/socket.io/socket.io.js')
     script.
-      var socket = io.connect('http://localhost:8080',{
+      var socket = io.connect('http://localhost:8005',{
         path : '/socket.io'
+        //transports : ['webSocket'] 웹소켓 사용여부를 묻지 않고 바로 실행
       });
       socket.on('news', function(data) {
         console.log(data);

@@ -1,0 +1,25 @@
+{
+    "parserOptions": {
+        "ecmaVersion": 2018,
+        "sourceType": "module",
+        "ecmaFeatures": {
+            "jsx": true,
+            "pug": true
+        }
+    },
+    "env": {
+        "browser": true,
+        "node": true
+    },
+    "extends": [
+        "prettier"
+    ],
+    "plugins": [
+        "prettier",
+        "plugin:prettier/recommended",
+        "eslint:recommended"
+    ],
+    "rules": {
+        "prettier/prettier": "error"
+    }
+}
