@@ -1,36 +1,25 @@
-const WebSocket = require('ws');
+const SocketIO = require('socket.io');
 
-module.exports = (server) => { //WSS 는 main PORT 와 같은 PORT를 적용 
-  const wss = new WebSocket.Server({ server });
+module.exports = (server) => {
+  const io = SocketIO(server, { path: '/socket.io' });
 
-  wss.on('connection', (ws, req) => {
+  io.on('connection', (socket) => {
+    const req = socket.request;
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    //proxy를 거치기 전의 ip || final ip
-    console.log('새로운 클라이언트 접속', ip);
-    ws.on('message', (message) => {
-      console.log(message);
+    console.log('새로운 클라이언트 접속!', ip, socket.id, req.ip);
+    //socket.id 로 클라이언트 구분 
+    socket.on('disconnect', () => {
+      console.log('클라이언트 접속 해제', ip, socket.id);
+      clearInterval(socket.interval);
     });
-    ws.on('error', (error) => {
+    socket.on('error', (error) => {
       console.error(error);
     });
-    ws.on('close', () => {
-      console.log('클라이언트 접속 해제', ip);
-      clearInterval(ws.interval); 
-      //client가 종료 시 interval 해제, 메시지 전송 끊기
+    socket.on('reply', (data) => { //응답 시 실행
+      console.log(data);
     });
-
-    //주기적으로 서버 -> 클라이언트 메시지 전송
-    const interval = setInterval(() => {
-      if (ws.readyState === ws.OPEN) { //다른 상태일 때는 메시지 전송X 
-        ws.send('메시지 전송');
-      }
+    socket.interval = setInterval(() => {
+      socket.emit('news', '메세지 전송');//key , value 
     }, 3000);
-    ws.interval = interval;
   });
 };
-
-//WSS 연결 상태(readyState)
-//connecting : 연결 중 
-//open : (양방향) 연결 수립
-//closing : 종료 중
-//closed : 종료

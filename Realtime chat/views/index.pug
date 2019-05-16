@@ -5,12 +5,13 @@ html
     title RealTime 채팅방 Example
   body
     div 검사 창을 활용!!
+    script(src='/socket.io/socket.io.js')
     script.
-      var webSocket = new WebSocket("ws://localhost:8005"); //ws : http, wss : https
-      webSocket.onopen = function () {
-        console.log('연결 성공!');
-      }
-      webSocket.onmessage = function (event) { //서버에서 메시지를 받았을 때 
-        console.log(event.data);
-        webSocket.send('클라이언트에서 서버로 답장을 보냅니다');
-      }
+      var socket = io.connect('http://localhost:8080',{
+        path : '/socket.io'
+      });
+      socket.on('news', function(data) {
+        console.log(data);
+        socket.emit('message', '서버로 전송!!');
+        socket.emit('reply', '응답 바람!!');
+      });
