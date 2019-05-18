@@ -20,6 +20,7 @@ module.exports = (server, app, sessionMiddleware) => {
       console.log('room namespace 접속 해제')
     });
   });
+  
   chat.on('connection', (socket) => {
     console.log('chat namespace 접속');
     //header 추출 
