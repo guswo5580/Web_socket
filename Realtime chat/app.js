@@ -5,6 +5,7 @@ const cookieParser = require('cookie-parser');
 const session = require('express-session');
 const flash = require('connect-flash');
 require('dotenv').config();
+const ColorHash = require('color-hash');
 
 const webSocket = require('./socket');
 const indexRouter = require('./routes');
@@ -12,6 +13,16 @@ const connect = require('./schemas');
 
 const app = express();
 connect(); //몽고디비 연결
+
+const sessionMiddleware = session({
+  resave: false,
+  saveUninitialized: false,
+  secret: process.env.COOKIE_SECRET,
+  cookie: {
+    httpOnly: true,
+    secure: false,
+  },
+});
 
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
@@ -22,16 +33,18 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser(process.env.COOKIE_SECRET));
-app.use(session({
-  resave: false,
-  saveUninitialized: false,
-  secret: process.env.COOKIE_SECRET,
-  cookie: {
-    httpOnly: true,
-    secure: false,
-  },
-}));
+app.use(sessionMiddleware);
 app.use(flash());
+
+//사용자에 대해 color값이 지정되어 있지 않으면
+//고유의 color를 가질 수 있도록 부여
+app.use((req, res, next) => {
+  if(!req.session.color){
+    const colorHash = new ColorHash();
+    req.session.color = colorHash.hex(req.sessionID);
+  }
+  next();
+});
 
 app.use('/', indexRouter);
 
@@ -52,4 +65,5 @@ const server = app.listen(app.get('port'), () => {
   console.log(app.get('port'), '번 포트에서 대기중');
 });
 
-webSocket(server); //WSS을 적용
+webSocket(server, app, sessionMiddleware); 
+//WSS을 적용 , app을 넘겨주어 socket에서도 app의 내용을 이용

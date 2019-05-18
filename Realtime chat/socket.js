@@ -1,25 +1,61 @@
 const SocketIO = require('socket.io');
+const axios = require('axios');
 
-module.exports = (server) => {
+module.exports = (server, app, sessionMiddleware) => {
   const io = SocketIO(server, { path: '/socket.io' });
+  app.set('io', io); //Express 변수 저장 방법
+  //req.app.get('io').of('/room').emit ~ 
 
-  io.on('connection', (socket) => {
+  //네임 스페이스(기본값 '/')
+  const room = io.of('/room');
+  const chat = io.of('/chat');
+  io.use((socket, next) => { 
+    //express 미들웨어 -> socket IO에서 사용하는 방법
+    sessionMiddleware(socket.request, socket.request.res, next );
+  });
+
+  room.on('connection', (socket) => {
+    console.log('room namespace 접속');
+    socket.on('disconnect', () =>{
+      console.log('room namespace 접속 해제')
+    });
+  });
+  chat.on('connection', (socket) => {
+    console.log('chat namespace 접속');
+    //header 추출 
+    //room/efefef -> (req.headers.referer)
     const req = socket.request;
-    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    console.log('새로운 클라이언트 접속!', ip, socket.id, req.ip);
-    //socket.id 로 클라이언트 구분 
-    socket.on('disconnect', () => {
-      console.log('클라이언트 접속 해제', ip, socket.id);
-      clearInterval(socket.interval);
+    const { headers : {referer}} = req;
+    const roomId = referer.split('/')[referer.split('/').length-1]
+    .replace(/\?.+/,'');
+    
+    socket.join(roomId); //방에 접속
+
+    socket.to(roomId).emit('join', { //roomId에만 메세지를 전송 
+      user : 'system',
+      chat : `${req.session.color}님이 입장하셨습니다`
     });
-    socket.on('error', (error) => {
-      console.error(error);
+    
+    socket.on('disconnect', () => { //접속 해제 
+      console.log('chat namespace 접속 해제');
+      socket.leave(roomId); //방 나가기
+      //방에 인원이 하나도 없다면, 방을 삭제 요청
+      const currentRoom = socket.adapter.rooms[roomId];
+      const userCount = currentRoom ? currentRoom.length : 0;
+      if(userCount === 0){
+        axios.delete(`http://localhost:8005/room/${roomId}`)
+          .then(() => {
+            console.log('방 제거 요청 성공');
+          }) 
+          .catch((error) => {
+            console.error(error);
+          })
+      }else {
+        socket.to(roomId).emit('exit', {
+          user : 'system',
+          chat : `${req.session.color}님이 퇴장하셨습니다`
+        });
+      }
     });
-    socket.on('reply', (data) => { //응답 시 실행
-      console.log(data);
-    });
-    socket.interval = setInterval(() => {
-      socket.emit('news', '메세지 전송');//key , value 
-    }, 3000);
   });
 };
