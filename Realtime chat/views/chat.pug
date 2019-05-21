@@ -3,6 +3,8 @@ extends layout
 block content
   h1= title
   a#exit-btn(href='/') 방 나가기
+  #number | 참여자 수 :
+  #number-count=number  
   fieldset
     legend 채팅 내용
     #chat-list
@@ -32,9 +34,11 @@ block content
   script(src='/socket.io/socket.io.js')
   script.
     var socket = io.connect('http://localhost:8005/chat', {
-      path: '/socket.io'
+      path: '/socket.io' //소켓 연결
     });
+    //방 참가
     socket.on('join', function (data) {
+      document.querySelector('#number-count').textContent = data.number;
       var div = document.createElement('div');
       div.classList.add('system');
       var chat = document.createElement('div');
@@ -42,7 +46,9 @@ block content
       div.appendChild(chat);
       document.querySelector('#chat-list').appendChild(div);
     });
+    //방 나가기
     socket.on('exit', function (data) {
+      document.querySelector('#number-count').textContent = data.number;
       var div = document.createElement('div');
       div.classList.add('system');
       var chat = document.createElement('div');

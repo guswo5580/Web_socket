@@ -43,7 +43,8 @@ module.exports = (server, app, sessionMiddleware) => {
 
     socket.to(roomId).emit('join', { //roomId에만 메세지를 전송 
       user: 'system',
-      chat: `${req.session.color}님이 입장하셨습니다`
+      chat: `${req.session.color}님이 입장하셨습니다`,
+      number: socket.adapter.rooms[rommId].length //방에 접속한 인원 전달
     });
 
     socket.on('disconnect', () => { //접속 해제 
@@ -63,7 +64,8 @@ module.exports = (server, app, sessionMiddleware) => {
       } else {
         socket.to(roomId).emit('exit', {
           user: 'system',
-          chat: `${req.session.color}님이 퇴장하셨습니다`
+          chat: `${req.session.color}님이 퇴장하셨습니다`,
+          number: socket.adapter.rooms[rommId].length //방에 접속한 인원 전달
         });
       }
     });

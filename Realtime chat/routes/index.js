@@ -86,6 +86,8 @@ router.get('/room/:id', async (req, res, next) => {
       room,
       title: room.title,
       chats,
+      number: (rooms && rooms[req.params.id] && rooms[req.params.id].length + 1) || 1,
+      //참여 시 기본값이 0으로 도출, 자신이 참가할 경우 1을 증가시키는 것을 디폴트로 설정
       user: req.session.color,
     });
   } catch (error) {
