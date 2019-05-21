@@ -3,15 +3,13 @@ extends layout
 block content
   h1= title
   a#exit-btn(href='/') 방 나가기
-  #number | 참여자 수 :
-  #number-count=number  
   fieldset
     legend 채팅 내용
     #chat-list
       for chat in chats
         if chat.user === user
           .mine(style='color:' + chat.user)
-            div= chat.user
+            div.chat-user= chat.user
             if chat.gif
               img(src='/gif/' + chat.gif)
             else
@@ -34,11 +32,9 @@ block content
   script(src='/socket.io/socket.io.js')
   script.
     var socket = io.connect('http://localhost:8005/chat', {
-      path: '/socket.io' //소켓 연결
+      path: '/socket.io'
     });
-    //방 참가
     socket.on('join', function (data) {
-      document.querySelector('#number-count').textContent = data.number;
       var div = document.createElement('div');
       div.classList.add('system');
       var chat = document.createElement('div');
@@ -46,13 +42,87 @@ block content
       div.appendChild(chat);
       document.querySelector('#chat-list').appendChild(div);
     });
-    //방 나가기
     socket.on('exit', function (data) {
-      document.querySelector('#number-count').textContent = data.number;
       var div = document.createElement('div');
       div.classList.add('system');
       var chat = document.createElement('div');
       div.textContent = data.chat;
       div.appendChild(chat);
       document.querySelector('#chat-list').appendChild(div);
+    });
+    socket.on('chat', function (data) {
+      var div = document.createElement('div');
+      if (data.user === '#{user}') {
+        div.classList.add('mine');
+      } else {
+        div.classList.add('other');
+      }
+      var name = document.createElement('div');
+      name.textContent = data.user;
+      name.className = 'chat-user';
+      ///////////////////////////////////////
+      if(data.user !== '#{user}'){ //자신이 아닌 다른 사람에게만 귓속말 전송 가능
+        var dm = document.createElement('button');
+        dm.textContent = '귓속말';
+        dm.className = 'dm';
+        dm.dataset.socket=data.socket;
+        dm.addEventListener('click', sendDM);
+        name.appendChild(dm);
+      }
+      div.appendChild(name);
+      if (data.chat) {
+        var chat = document.createElement('div');
+        chat.textContent = data.chat;
+        div.appendChild(chat);
+      } else {
+        var gif = document.createElement('img');
+        gif.src = '/gif/' + data.gif;
+        div.appendChild(gif);
+      }
+      div.style.color = data.user;
+      document.querySelector('#chat-list').appendChild(div);
+    });
+    document.querySelector('#chat-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (e.target.chat.value) {
+        var xhr = new XMLHttpRequest();
+        xhr.onload = function () {
+          if (xhr.status === 200) {
+            e.target.chat.value = '';
+          } else {
+            console.error(xhr.responseText);
+          }
+        };
+        xhr.open('POST', '/room/#{room._id}/chat');
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.send(JSON.stringify({ chat: this.chat.value, sid: socket.id }));
+      }
+    });
+    document.querySelector('#gif').addEventListener('change', function (e) {
+      var formData = new FormData();
+      var xhr = new XMLHttpRequest();
+      console.log(e.target.files);
+      formData.append('gif', e.target.files[0]);
+      xhr.onload = function () {
+        if (xhr.status === 200) {
+          e.target.file = null;
+        } else {
+          console.error(xhr.responseText);
+        }
+      };
+      xhr.open('POST', '/room/#{room._id}/gif');
+      xhr.send(formData);
+    });
+    var sendDM = function(e) {
+      var id = e.target.dataset.socket;
+      var prompt = window.prompt('귓속말 입력');
+      socket.emit('dm', {target : id, msg : prompt, from : '#{user}'})
+      //#{} script 내부에서 변수 접근
+    };
+    Array.protoType.forEach.call(document.querySelectorAll('.dm'), function(el){
+      el.addEventListener('click',sendDM);
+    }); 
+
+    socket.on('dm', function(data){
+      alert(data.from + '님에게서 귓속말이 도착했습니다 : ' + data.msg);
     });

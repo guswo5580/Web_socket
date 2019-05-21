@@ -90,5 +90,10 @@ module.exports = (server, app, sessionMiddleware) => {
         });
       }
     });
+
+    socket.on('dm', (data) => {
+      socket.to(data.target).emit('dm', data);
+      //방 id 대신 개인의 socket id를 지정
+    });
   });
 };
