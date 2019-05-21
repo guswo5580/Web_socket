@@ -91,9 +91,14 @@ module.exports = (server, app, sessionMiddleware) => {
       }
     });
 
+    //한 사람에게만 적용할 때는 to로 id 값을 넣어주면 OK 
     socket.on('dm', (data) => {
       socket.to(data.target).emit('dm', data);
       //방 id 대신 개인의 socket id를 지정
+    });
+
+    socket.on('ban', (data) => {
+      socket.to(data.id).emit('ban');
     });
   });
 };
