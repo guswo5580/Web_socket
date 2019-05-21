@@ -168,4 +168,28 @@ router.post('/room/:id/gif', upload.single('gif'), async (req, res, next) => {
   }
 });
 
+//입장, 퇴장 sysmessage Room 별로 유지
+router.post('/room/:id/sys', async (req, res, next) => {
+  try {
+    const chat = req.body.type === 'join' ?
+      `${req.session.color} 님이 입장하셨습니다` :
+      `${req.session.color} 님이 퇴장하셨습니다`;
+    const sys = new Chat({
+      room: req.params.id,
+      user: 'system',
+      chat
+    });
+    await sys.save();
+
+    req.app.get('io').of('/chat').to(req.params.id).emit(req.body.type, {
+      user: 'system',
+      chat,
+      number: req.app.get('io').of('/chat').adapter.rooms[req.params.id].length
+    });
+    res.send('OK');
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+});
 module.exports = router;
