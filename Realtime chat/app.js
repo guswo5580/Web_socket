@@ -22,7 +22,7 @@ const sessionMiddleware = session({
     httpOnly: true,
     secure: false,
   },
-});
+}); //소켓에서 세션 미들웨어 이용 가능하도록 따로 작성
 
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');

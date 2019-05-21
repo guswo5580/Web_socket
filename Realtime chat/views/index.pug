@@ -9,10 +9,14 @@ html
     script.
       var socket = io.connect('http://localhost:8005',{
         path : '/socket.io'
+        //server.js 에서의 path값과 동일하게 설정 
         //transports : ['webSocket'] 웹소켓 사용여부를 묻지 않고 바로 실행
       });
-      socket.on('news', function(data) {
-        console.log(data);
-        socket.emit('message', '서버로 전송!!');
-        socket.emit('reply', '응답 바람!!');
+      
+
+      //- socket.on('news', function(data) {
+      //-   console.log(data);
+      //-   socket.emit('message', '서버로 전송!!');
+      //-   socket.emit('reply', '응답 바람!!');
+      //소켓 연결 신호 예시 
       });

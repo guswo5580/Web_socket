@@ -22,12 +22,15 @@ block content
             td: button(data-password=password data-id=room._id).join-btn 입장
   .error-message= error
   a(href='/room') 채팅방 생성
+  ////////////////////////////////////////////////////
+
   script(src='/socket.io/socket.io.js')
   script.
     var socket = io.connect('http://localhost:8005/room', {
       path: '/socket.io'
     });
-    socket.on('newRoom', function (data) {
+    //소켓 연결
+    socket.on('newRoom', function (data) { //서버에서 제공하는 newRoom에 접근
       var tr = document.createElement('tr');
       var td = document.createElement('td');
       td.textContent = data.title;
